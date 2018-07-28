@@ -1,0 +1,28 @@
+{
+  "name": "vettipbot",
+  "version": "0.0.1",
+  "description": "A tip bot for the VeChain blockchain platform",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VETtipbot/VETtipbot.git"
+  },
+  "keywords": [
+    "VeChain",
+    "tipbot"
+  ],
+  "author": "VETtipbot",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/VETtipbot/VETtipbot/issues"
+  },
+  "homepage": "https://github.com/VETtipbot/VETtipbot#readme",
+  "dependencies": {
+    "dotenv": "^6.0.0",
+    "snoostorm": "0.0.5",
+    "snoowrap": "^1.15.2"
+  }
+}
