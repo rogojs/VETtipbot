@@ -4,7 +4,9 @@
   "description": "A tip bot for the VeChain blockchain platform",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build-grammar": "nearleyc ./grammar.ne -o ./grammar.js",
+    "test-grammar": "mocha ./grammar.test.js",
+    "build": "npm run lint && npm run build-grammar && npm run test-grammar"
   },
   "repository": {
     "type": "git",
@@ -23,10 +25,16 @@
   "dependencies": {
     "chai": "^4.1.2",
     "dotenv": "^6.0.0",
+    "eslint-config-airbnb": "^17.0.0",
     "events": "^3.0.0",
     "moo": "^0.4.3",
     "nearley": "^2.15.0",
     "snoostorm": "0.0.5",
     "snoowrap": "^1.15.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.13.0"
   }
 }

@@ -1,6 +1,7 @@
 @{%
 const moo = require("moo");
 
+// Simplistic grammar definition, semantics are left for another level
 let grammarDefinition = {
   operator: /[@|!][a-z]+/,
   text: /[a-zA-Z0-9_\-\.]+/,
@@ -10,18 +11,10 @@ let grammarDefinition = {
 const lexer = moo.compile(grammarDefinition);
 %}
 
+// Defining an external lexer 
 @lexer lexer
 
-# command -> (%preprocessor %keyword ( %whitespace parameter ):* ) {% 
-# (data) => { 
-#    return { 
-#      command: data[0][0][1]["value"],
-#      parameters: data[0][0][2].map( (d) => { return d[1][0].value; } )
-#    };
-#  }
-# %}
-# parameter -> %text | %number
-
+// Nearley grammar syntax 
 command -> (%operator ( %whitespace parameter ):* ) {% 
   (data) => { 
     return {
