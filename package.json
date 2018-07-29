@@ -21,7 +21,11 @@
   },
   "homepage": "https://github.com/VETtipbot/VETtipbot#readme",
   "dependencies": {
+    "chai": "^4.1.2",
     "dotenv": "^6.0.0",
+    "events": "^3.0.0",
+    "moo": "^0.4.3",
+    "nearley": "^2.15.0",
     "snoostorm": "0.0.5",
     "snoowrap": "^1.15.2"
   }
