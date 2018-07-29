@@ -11,10 +11,10 @@ let grammarDefinition = {
 const lexer = moo.compile(grammarDefinition);
 %}
 
-// Defining an external lexer 
+# Defining an external lexer 
 @lexer lexer
 
-// Nearley grammar syntax 
+# Nearley grammar syntax 
 command -> (%operator ( %whitespace parameter ):* ) {% 
   (data) => { 
     return {

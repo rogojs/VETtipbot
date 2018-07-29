@@ -1,7 +1,7 @@
 /* global it, describe, beforeEach */
 const { expect } = require('chai');
 const nearley = require('nearley');
-const compiledGrammar = require('./grammar.js');
+const compiledGrammar = require('../grammars/grammar');
 
 const nearleyGrammar = nearley.Grammar.fromCompiled(compiledGrammar);
 const parser = new nearley.Parser(nearleyGrammar);

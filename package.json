@@ -4,9 +4,10 @@
   "description": "A tip bot for the VeChain blockchain platform",
   "main": "index.js",
   "scripts": {
-    "build-grammar": "nearleyc ./grammar.ne -o ./grammar.js",
-    "test-grammar": "mocha ./grammar.test.js",
-    "build": "npm run lint && npm run build-grammar && npm run test-grammar"
+    "build-grammar": "nearleyc ./grammars/grammar.ne -o ./grammars/grammar.js",
+    "test-grammar": "mocha ./tests/grammar.test.js",
+    "tests": "npm run test-grammar",
+    "build": "npm run build-grammar && npm run tests"
   },
   "repository": {
     "type": "git",
@@ -30,7 +31,8 @@
     "moo": "^0.4.3",
     "nearley": "^2.15.0",
     "snoostorm": "0.0.5",
-    "snoowrap": "^1.15.2"
+    "snoowrap": "^1.15.2",
+    "yargs": "^12.0.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
