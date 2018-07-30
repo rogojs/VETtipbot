@@ -1,5 +1,5 @@
 const parser = require('yargs')
-  .commandDir('../commands')
+  .commandDir('../commands/')
   .help(false);
 
 exports.parse = parser.parse;
