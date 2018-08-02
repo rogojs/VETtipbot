@@ -5,6 +5,17 @@ const command = require('./parsers/command').parse;
 const eventEmitter = new EventEmitter();
 const grammarResult = grammar('@register reddit rogo');
 
+/*
+ api()
+  .register({source,username},(err, instance)=>{
+    err === null : no errors, instance should be valid
+      source+username does not exist, create it
+      source+username does exist, return it
+    err !== null : error, err = { message: '', details: {}}
+      database not available?
+  })  
+*/
+
 eventEmitter.on('@register', (source, username) => {
   console.log(`handled @register ${source} ${username}`);
 });
