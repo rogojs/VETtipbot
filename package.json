@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build-grammar": "nearleyc ./grammars/grammar.ne -o ./grammars/grammar.js",
-    "test": "mocha **/*.test.js",
+    "test-migration": "mocha api/data/migration.test.js",
+    "test": "mocha tests/*.test.js",
     "build": "npm run build-grammar && npm run test"
   },
   "repository": {

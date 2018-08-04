@@ -1,30 +1,29 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('ReleaseNotes', {
+    return queryInterface.createTable('Platforms', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      version: {
-        type: Sequelize.STRING
-      },
-      notes: {
+      name: {
         type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('ReleaseNotes');
+    return queryInterface.dropTable('Platforms');
   }
 };
