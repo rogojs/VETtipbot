@@ -4,12 +4,12 @@ module.exports = (sequelize, DataTypes) => {
     username: DataTypes.STRING,
     platformId: DataTypes.INTEGER
   }, {});
-  Customer.associate = function(models) {
-    models.Customer.belongsTo(models.Platform,{
+  Customer.associate = function (models) {
+    models.Customer.belongsTo(models.Platform, {
       foreignKey: "platformId",
       as: "platform",
     });
-    models.Customer.hasMany(models.Address);
+    models.Customer.hasMany(models.Address, { foreignKey: 'customerId' });
   };
   return Customer;
 };
