@@ -3,24 +3,24 @@ require('dotenv').config({ path: path.resolve('../../.env') });
 
 module.exports = {
   development: {
-    username: 'api-tipbot',
-    password: process.env.DEV_DB_PASSWORD,
-    database: 'dev_tipbot',
-    host: '127.0.0.1',
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
     dialect: 'postgres',
   },
   test: {
-    username: 'api-tipbot',
-    password: process.env.TEST_DB_PASSWORD,
-    database: 'test_tipbot',
-    host: '127.0.0.1',
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
     dialect: 'postgres',
   },
   production: {
-    username: 'api-tipbot',
-    password: process.env.PROD_DB_PASSWORD,
-    database: 'prod_tipbot',
-    host: '127.0.0.1',
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
     dialect: 'postgres',
     logging: false
   },
