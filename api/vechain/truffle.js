@@ -1,0 +1,1 @@
+/* truffle requires a placeholder config file */

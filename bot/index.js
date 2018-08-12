@@ -7,17 +7,17 @@ const { Api } = require('../api');
 
 function Bot(options) {
   this.eventEmitter = new EventEmitter();
-  this.api = new Api();
+  this.api = new Api({ network: options.network });
   this.snooWrap = new Snoowrap(options.snooWrap);
-  this.snoostorm = new Snoostorm(options.snooWrap);
+  this.snoostorm = new Snoostorm(this.snooWrap);
   this.comments = this.snoostorm.CommentStream(options.streamOpts);
 
-  function grammarPostProcessor(grammarResult, context) {
+  Bot.prototype.grammarPostProcessor = function grammarPostProcessor(grammarResult, context) {
     if (!grammarResult) { return null; }
 
     const processedResult = {
       command: null,
-      paramaters: null,
+      parameters: null,
     };
 
     processedResult.command = grammarResult.command.replace('!', '@');
@@ -25,19 +25,27 @@ function Bot(options) {
     switch (processedResult.command) {
       case '@register':
         processedResult.parameters = [context.source, context.username];
-        break;
+        return new Promise((resolve) => { resolve(processedResult); });
+      case '@tip':
+        processedResult.command = '@sendvtho';
+        return this.snooWrap.getSubmission(context.parentId).author.name.then((name) => {
+          processedResult.parameters = [
+            context.source,
+            context.username,
+            name,
+            grammarResult.parameters[0]];
+          return new Promise((resolve) => {
+            resolve(processedResult);
+          });
+        });
       default:
         processedResult.parameters = grammarResult.parameters;
-        break;
+        return new Promise((resolve) => { resolve(processedResult); });
     }
-
-    return processedResult;
-  }
-
+  };
 
   Bot.prototype.run = function run() {
     this.comments.on('comment', (comment) => {
-      // TODO scale here as needed
       this.eventEmitter.emit('comment', comment);
     });
 
@@ -46,15 +54,34 @@ function Bot(options) {
         const grammarResult = grammar(comment.body);
 
         if (grammarResult) {
-          const processedResult = grammarPostProcessor(grammarResult, { source: 'reddit', username: comment.author.name });
-          const commandText = `${processedResult.command.replace('!', '@')} ${processedResult.parameters.join(' ')}`;
-          command(commandText, { emitter: this.eventEmitter });
+          this.grammarPostProcessor(grammarResult,
+            {
+              source: 'reddit',
+              username: comment.author.name,
+              parentId: comment.parent_id,
+            })
+            .then((processedResult) => {
+              const commandText = `${processedResult.command.replace('!', '@')} ${processedResult.parameters.join(' ')}`;
+              command(commandText, { emitter: this.eventEmitter });
+            });
         }
       }
     });
 
     this.eventEmitter.on('@register', (source, username) => {
-      this.api.registerCustomer(source, username);
+      this.api
+        .registerCustomer(source, username)
+        .then(() => {
+          console.log('completed @register');
+        });
+    });
+
+    this.eventEmitter.on('@sendvtho', (source, payee, payor, amount) => {
+      this.api
+        .sendvtho(source, payee, payor, amount)
+        .then(() => {
+          console.log('completed @sendvtho');
+        });
     });
   };
 }

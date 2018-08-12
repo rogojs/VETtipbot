@@ -1,8 +1,8 @@
-// Boilerplate implementation while testing
 require('dotenv').config();
 const { Bot } = require('./bot');
 
 const tipbot = new Bot({
+  network: 'http://localhost:8669',
   streamOpts: { subreddit: process.env.REDDIT_CHANNELS, results: 25 },
   snooWrap: {
     userAgent: process.env.USER_AGENT,

@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     privateKey: DataTypes.STRING,
     publicKey: DataTypes.STRING,
     address: DataTypes.STRING,
+    mnemonicPhrase: DataTypes.STRING,
     customerId: DataTypes.INTEGER
   }, {});
   Address.associate = function(models) {
