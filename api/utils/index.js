@@ -28,8 +28,4 @@ Utils.createWalletFromMnemonic = function createWalletFromMnemonic(mnemonic) {
   };
 };
 
-Utils.restoreTestWallets = function restoreTestWallets(username) {
-
-}
-
 module.exports.Utils = Utils;
