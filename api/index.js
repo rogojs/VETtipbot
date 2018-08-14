@@ -43,12 +43,15 @@ function createAddress(customer, name) {
         name,
         customerId: customer.id,
       },
+      include: [{
+        model: Customer,
+        as: 'customer',
+      }],
     })
     .then((result) => {
       if (result === null) {
         const mnemonic = Utils.generateMnemonic();
         const wallet = Utils.createWalletFromMnemonic(mnemonic);
-
         const newAddress = Address.build({
           name,
           privateKey: wallet.privateKey,
@@ -62,6 +65,21 @@ function createAddress(customer, name) {
       }
       return result;
     });
+}
+
+function sendAddressInContext(source, customer, address, context) {
+  switch (source) {
+    case 'reddit':
+      context[source]
+        .composeMessage({
+          to: customer.username,
+          subject: 'your vtho tipbot deposit address',
+          text: `Open your [QR Code](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}) in a new window to scan.`,
+        });
+      break;
+    default:
+      break;
+  }
 }
 
 function handleError(error) {
@@ -124,7 +142,68 @@ function Api(options) {
     return contractObject
       .methods.transfer(addressTo.address, amount)
       .call({ from: addressFrom.address })
+      .then((result) => { console.log(result); })
       .catch((error) => { console.log(error); });
+  };
+
+  Api.prototype.sendBalanceInContext = function sendBalanceInContext(source, customer, address, context) {
+    this.web3.eth.accounts.wallet.add(address.privateKey);
+
+    const contract = JSON.parse(fs.readFileSync(path.resolve('./api/vechain/build/contracts/Energy.json')));
+
+    const contractObject = new this.web3.eth.Contract(contract.abi,
+      process.env.VECHAIN_ENERGY_CONTRACT_ADDRESS);
+
+    return contractObject
+      .methods.balanceOf(address.address)
+      .call({ from: address.address })
+      .then((result) => {
+        switch (source) {
+          case 'reddit':
+            context[source]
+              .composeMessage({
+                to: customer.username,
+                subject: 'your vtho tipbot balance',
+                text: `Your current balance is ${result} VTHO`,
+              });
+            break;
+          default:
+            break;
+        }
+      })
+      .catch((error) => { console.log(error); });
+  }
+
+  Api.prototype.sendAddress = function sendAddress(source, username, context) {
+    return Platform
+      .findOne({
+        name: source,
+      })
+      .then(platform => Promise.all([
+        createCustomer(platform, username)]))
+      .then(([customer]) => Promise.all([
+        customer,
+        createAddress(customer, '_default')]))
+      .then(([customer, address]) => sendAddressInContext(source,
+        customer,
+        address,
+        context));
+  };
+
+  Api.prototype.sendBalance = function sendBalance(source, username, context) {
+    return Platform
+      .findOne({
+        name: source,
+      })
+      .then(platform => Promise.all([
+        createCustomer(platform, username)]))
+      .then(([customer]) => Promise.all([
+        customer,
+        createAddress(customer, '_default')]))
+      .then(([customer, address]) => this.sendBalanceInContext(source,
+        customer,
+        address,
+        context));
   };
 }
 
