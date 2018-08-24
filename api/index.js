@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Web3 = require('web3');
 const { thorify } = require('thorify');
+const request = require('superagent');
 const { Platform, Customer, Address } = require('./data/models');
 const { Utils } = require('./utils');
 
@@ -133,20 +134,32 @@ function Api(options) {
   };
 
   Api.prototype.sendEnergy = function sendEnergy(addressFrom, addressTo, amount) {
-    this.web3.eth.accounts.wallet.add(addressFrom.privateKey);
+    this.web3.eth.accounts.wallet.clear();
+    this.web3.eth.accounts.wallet.add(`0x${addressFrom.privateKey}`);
 
     const contract = JSON.parse(fs.readFileSync(path.resolve('./api/vechain/build/contracts/Energy.json')));
 
     const contractObject = new this.web3.eth.Contract(contract.abi,
       process.env.VECHAIN_ENERGY_CONTRACT_ADDRESS);
+      console.log('trying to send the money')
     return contractObject
       .methods.transfer(addressTo.address, amount)
-      .call({ from: addressFrom.address })
-      .then((result) => { console.log(result); })
-      .catch((error) => { console.log(error); });
+      .send({ from: addressFrom.address })
+      .then((result) => {
+        console.log('result from send erngy');
+        console.log(result);
+      })
+      .catch((err) => { 
+        console.log('had a problem');
+        console.log(err);
+      });
   };
 
-  Api.prototype.sendBalanceInContext = function sendBalanceInContext(source, customer, address, context) {
+  Api.prototype.sendBalanceInContext = function sendBalanceInContext(source,
+    customer,
+    address,
+    context) {
+    this.web3.eth.accounts.wallet.clear();
     this.web3.eth.accounts.wallet.add(address.privateKey);
 
     const contract = JSON.parse(fs.readFileSync(path.resolve('./api/vechain/build/contracts/Energy.json')));
@@ -154,10 +167,13 @@ function Api(options) {
     const contractObject = new this.web3.eth.Contract(contract.abi,
       process.env.VECHAIN_ENERGY_CONTRACT_ADDRESS);
 
+    console.log('trying to get balance');
+
     return contractObject
       .methods.balanceOf(address.address)
       .call({ from: address.address })
       .then((result) => {
+        console.log(result);
         switch (source) {
           case 'reddit':
             context[source]
@@ -171,8 +187,8 @@ function Api(options) {
             break;
         }
       })
-      .catch((error) => { console.log(error); });
-  }
+      .catch((error) => { console.log('CAUGHT ERROR'); console.log(error); });
+  };
 
   Api.prototype.sendAddress = function sendAddress(source, username, context) {
     return Platform
@@ -204,6 +220,48 @@ function Api(options) {
         customer,
         address,
         context));
+  };
+
+  Api.prototype.withdraw = function withdraw(source, payee, address, amount) {
+    return Platform
+      .findOne({
+        name: source,
+      })
+      .then(platform => Promise.all([
+        createCustomer(platform, payee)]))
+      .then(customers => Promise.all([
+        createAddress(customers[0], '_default'),
+        address]))
+      .then(([payeeAddress, rawAddress]) => this.sendEnergy(
+        payeeAddress,
+        { address: rawAddress },
+        amount,
+      ));
+  };
+
+  Api.prototype.faucet = function faucet(source, username, context) {
+    return Platform
+      .findOne({
+        name: source,
+      })
+      .then(platform => Promise.all([
+        createCustomer(platform, username)]))
+      .then(([customer]) => Promise.all([
+        customer,
+        createAddress(customer, '_default')]))
+      .then(([customer, address]) => this.faucetFundAccount(source,
+        customer,
+        address,
+        context));
+  };
+
+  Api.prototype.faucetFundAccount = function faucetFundAccount(source, customer, address, context) {
+    request
+      .post('https://faucet.outofgas.io/requests')
+      .send({ to: address.address })
+      .end(() => {
+        console.log('faucet request completed...');
+      });
   };
 }
 

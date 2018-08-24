@@ -12,7 +12,7 @@ function parse(openText) {
     parser.restore(resetState);
     return results[0];
   } catch (error) {
-    // TODO: we should have a rolling log of commands sent in that result in an error
+    parser.restore(resetState);
     return null;
   }
 }

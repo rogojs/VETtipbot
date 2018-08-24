@@ -2,8 +2,8 @@ require('dotenv').config();
 const { Bot } = require('./bot');
 
 const tipbot = new Bot({
-  network: 'http://localhost:8669',
-  streamOpts: { subreddit: process.env.REDDIT_CHANNELS, results: 25 },
+  network: process.env.VECHAIN_API,
+  streamOpts: { subreddit: process.env.REDDIT_CHANNELS, results: process.env.REDDIT_MSG_MAX },
   snooWrap: {
     userAgent: process.env.USER_AGENT,
     clientId: process.env.CLIENT_ID,

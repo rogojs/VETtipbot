@@ -12,6 +12,7 @@ beforeEach(() => {
 });
 
 describe('[tipbot grammar]', () => {
+
   it('...allows @command syntax', () => {
     expect(() => { parser.feed('@mycommand'); }).to.not.throw();
   });

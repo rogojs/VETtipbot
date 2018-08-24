@@ -1,9 +1,8 @@
 const bip39 = require('bip39');
 const hdkey = require('ethereumjs-wallet/hdkey');
 
-// Saying this outloud makes you sound really smart
-// Sort of like repeating things you learn in KSP
-const hierarchicalDeterministicWalletPath = "m/44'/818'/0'/0/00";
+const hdWalletPath = "m/44'/818'/0'/0/00";
+const stringFormat = 'hex';
 
 function Utils() {
 }
@@ -16,10 +15,10 @@ Utils.createWalletFromMnemonic = function createWalletFromMnemonic(mnemonic) {
   const seed = bip39.mnemonicToSeed(mnemonic);
   const hdwallet = hdkey.fromMasterSeed(seed);
 
-  const wallet = hdwallet.derivePath(hierarchicalDeterministicWalletPath).getWallet();
-  const address = `0x${wallet.getAddress().toString('hex')}`;
-  const privateKey = wallet.getPrivateKey().toString('hex');
-  const publicKey = wallet.getPublicKey().toString('hex');
+  const wallet = hdwallet.derivePath(hdWalletPath).getWallet();
+  const address = `0x${wallet.getAddress().toString(stringFormat)}`;
+  const privateKey = wallet.getPrivateKey().toString(stringFormat);
+  const publicKey = wallet.getPublicKey().toString(stringFormat);
 
   return {
     address,

@@ -18,12 +18,12 @@ function Bot(options) {
 
   this.commentEvents = this.redditEmitter.Comments({
     subreddit: process.env.REDDIT_CHANNELS,
-    maxItems: 5,
-    interval: 3500,
+    maxItems: 1000,
+    interval: 15000,
   });
 
   this.messageEvents = this.redditEmitter.Messages({
-    interval: 3500,
+    interval: 15000,
   });
 
   Bot.prototype.grammarPostProcessor = function grammarPostProcessor(grammarResult, context) {
@@ -42,7 +42,7 @@ function Bot(options) {
         return new Promise((resolve) => { resolve(processedResult); });
       case '@tip':
         processedResult.command = '@sendvtho';
-        return this.snooWrap.getSubmission(context.parentId).author.name.then((name) => {
+        return this.snooWrap.getComment(context.parentId).author.name.then((name) => {
           processedResult.parameters = [
             context.source,
             context.username,
@@ -51,11 +51,24 @@ function Bot(options) {
           return new Promise((resolve) => {
             resolve(processedResult);
           });
-        });
+        })
+          .catch(() => {
+            console.log('oops, @tip error');
+          });
       case '@deposit':
         processedResult.parameters = [context.source, context.username];
         return new Promise((resolve) => { resolve(processedResult); });
       case '@balance':
+        processedResult.parameters = [context.source, context.username];
+        return new Promise((resolve) => { resolve(processedResult); });
+      case '@withdraw':
+        processedResult.parameters = [
+          context.source,
+          context.username,
+          grammarResult.parameters[0],
+          grammarResult.parameters[1]];
+        return new Promise((resolve) => { resolve(processedResult); });
+      case '@faucet':
         processedResult.parameters = [context.source, context.username];
         return new Promise((resolve) => { resolve(processedResult); });
       default:
@@ -74,10 +87,19 @@ function Bot(options) {
     });
 
     this.internalEmitters.comments.on('comment', (comment) => {
+      console.log(1);
       if (comment.body.length <= 100) {
+        console.log(2);
         const grammarResult = grammar(comment.body);
+        console.log(grammarResult);
+
+        if(grammarResult === null)
+        {
+          console.log(comment.body);
+        }
 
         if (grammarResult) {
+          console.log(3);
           this.grammarPostProcessor(grammarResult,
             {
               source: 'reddit',
@@ -85,6 +107,7 @@ function Bot(options) {
               parentId: comment.parent_id,
             })
             .then((processedResult) => {
+              console.log(4);
               const commandText = `${processedResult.command.replace('!', '@')} ${processedResult.parameters.join(' ')}`;
               command(commandText, { emitter: this.internalEmitters.comments });
             });
@@ -142,8 +165,20 @@ function Bot(options) {
         });
     });
 
-    this.internalEmitters.directMessages.on('@withdraw', (source, username) => {
-      console.log(`withdrawing for ${username} on ${source}`);
+    this.internalEmitters.directMessages.on('@withdraw', (source, username, address, amount) => {
+      this.api
+        .withdraw(source, username, address, amount, { reddit: this.snooWrap })
+        .then(() => {
+          console.log('completed @withdraw');
+        });
+    });
+
+    this.internalEmitters.directMessages.on('@faucet', (source, username) => {
+      this.api
+        .faucet(source, username, { reddit: this.snooWrap })
+        .then(() => {
+          console.log('completed @faucet');
+        });
     });
   };
 }

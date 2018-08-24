@@ -8,7 +8,8 @@ module.exports = {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     operatorsAliases: false,
-    dialect: 'postgres',
+    dialect: process.env.DB_DIALECT,
+    logging: false
   },
   test: {
     username: process.env.DB_USERNAME,
@@ -16,14 +17,14 @@ module.exports = {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     operatorsAliases: false,
-    dialect: 'postgres',
+    dialect: process.env.DB_DIALECT,
   },
   production: {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
-    dialect: 'postgres',
+    dialect: process.env.DB_DIALECT,
     operatorsAliases: false,
     logging: false
   },
