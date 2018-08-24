@@ -18,12 +18,12 @@ function Bot(options) {
 
   this.commentEvents = this.redditEmitter.Comments({
     subreddit: process.env.REDDIT_CHANNELS,
-    maxItems: 1000,
-    interval: 15000,
+    maxItems: parseInt(process.env.REDDIT_COMMENT_MAXITEMS, 10),
+    interval: process.env.REDDIT_COMMENT_INTERVAL,
   });
 
   this.messageEvents = this.redditEmitter.Messages({
-    interval: 15000,
+    interval: process.env.REDDIT_MESSAGE_INTERVAL,
   });
 
   Bot.prototype.grammarPostProcessor = function grammarPostProcessor(grammarResult, context) {
@@ -42,18 +42,17 @@ function Bot(options) {
         return new Promise((resolve) => { resolve(processedResult); });
       case '@tip':
         processedResult.command = '@sendvtho';
-        return this.snooWrap.getComment(context.parentId).author.name.then((name) => {
-          processedResult.parameters = [
-            context.source,
-            context.username,
-            name,
-            grammarResult.parameters[0]];
-          return new Promise((resolve) => {
-            resolve(processedResult);
-          });
-        })
-          .catch(() => {
-            console.log('oops, @tip error');
+        return this.snooWrap
+          .getComment(context.parentId).author.name
+          .then((name) => {
+            processedResult.parameters = [
+              context.source,
+              context.username,
+              name,
+              grammarResult.parameters[0]];
+            return new Promise((resolve) => {
+              resolve(processedResult);
+            });
           });
       case '@deposit':
         processedResult.parameters = [context.source, context.username];
@@ -77,6 +76,19 @@ function Bot(options) {
     }
   };
 
+  Bot.prototype.sendMessage = function sendMessage(type, username, subject, message) {
+    switch (type) {
+      case 'reddit':
+        this.snooWrap.composeMessage({
+          to: username,
+          subject,
+          text: message,
+        });
+        break;
+      default: return true;
+    }
+  };
+
   Bot.prototype.run = function run() {
     this.commentEvents.on('comment', (comment) => {
       this.internalEmitters.comments.emit('comment', comment);
@@ -87,19 +99,15 @@ function Bot(options) {
     });
 
     this.internalEmitters.comments.on('comment', (comment) => {
-      console.log(1);
       if (comment.body.length <= 100) {
-        console.log(2);
         const grammarResult = grammar(comment.body);
-        console.log(grammarResult);
 
-        if(grammarResult === null)
-        {
+        // TODO replace with logging
+        if (grammarResult === null) {
           console.log(comment.body);
         }
 
         if (grammarResult) {
-          console.log(3);
           this.grammarPostProcessor(grammarResult,
             {
               source: 'reddit',
@@ -107,7 +115,6 @@ function Bot(options) {
               parentId: comment.parent_id,
             })
             .then((processedResult) => {
-              console.log(4);
               const commandText = `${processedResult.command.replace('!', '@')} ${processedResult.parameters.join(' ')}`;
               command(commandText, { emitter: this.internalEmitters.comments });
             });
@@ -138,6 +145,9 @@ function Bot(options) {
         .sendvtho(source, payee, payor, amount)
         .then(() => {
           console.log('completed @sendvtho');
+        })
+        .catch(() => {
+          console.log('error @sendvtho');
         });
     });
 
@@ -146,38 +156,60 @@ function Bot(options) {
         .registerCustomer(source, username)
         .then(() => {
           console.log('completed @register');
+        })
+        .catch(() => {
+          console.log('error @register');
         });
     });
 
     this.internalEmitters.directMessages.on('@deposit', (source, username) => {
       this.api
-        .sendAddress(source, username, { reddit: this.snooWrap })
-        .then(() => {
+        .sendAddress(source, username)
+        .then(([customer, address]) => {
+          // todo add logging
           console.log('completed @deposit');
+          this.sendMessage(source, username, 'your vtho tipbot deposit address', `Open your [QR Code](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}) in a new window to scan.`);
+        })
+        .catch(() => {
+          // todo add logging
+          console.log('error @deposit');
         });
     });
 
     this.internalEmitters.directMessages.on('@balance', (source, username) => {
       this.api
-        .sendBalance(source, username, { reddit: this.snooWrap })
-        .then(() => {
+        .sendBalance(source, username)
+        .then((result) => {
+          this.sendMessage(source, username, 'your vtho tipbot balance', `Your current balance is ${result / 100000000000000000000} VTHO`);
+          // todo add logging
           console.log('completed @balance');
+        })
+        .catch(() => {
+          // todo add logging
+          console.log('error @balance');
         });
     });
 
     this.internalEmitters.directMessages.on('@withdraw', (source, username, address, amount) => {
       this.api
         .withdraw(source, username, address, amount, { reddit: this.snooWrap })
-        .then(() => {
+        .then((result) => {
+          console.log(result);
           console.log('completed @withdraw');
+        })
+        .catch(() => {
+          console.log('error @withdraw');
         });
     });
 
     this.internalEmitters.directMessages.on('@faucet', (source, username) => {
       this.api
-        .faucet(source, username, { reddit: this.snooWrap })
+        .faucet(source, username)
         .then(() => {
           console.log('completed @faucet');
+        })
+        .catch(() => {
+          console.log('error @faucet');
         });
     });
   };

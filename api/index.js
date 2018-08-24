@@ -68,37 +68,6 @@ function createAddress(customer, name) {
     });
 }
 
-function sendAddressInContext(source, customer, address, context) {
-  switch (source) {
-    case 'reddit':
-      context[source]
-        .composeMessage({
-          to: customer.username,
-          subject: 'your vtho tipbot deposit address',
-          text: `Open your [QR Code](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}) in a new window to scan.`,
-        });
-      break;
-    default:
-      break;
-  }
-}
-
-function handleError(error) {
-  return new Promise((resolve) => {
-    if (error) {
-      // TODO: Replace with proper logging
-      let details = error.message;
-      if (error.errors) {
-        details = error.errors.map(item => item.message).join(',');
-      }
-
-      // TODO add real logging ;-)
-      console.log(`api errors: [${details}]`);
-    }
-    resolve();
-  });
-}
-
 function Api(options) {
   const defaultOptions = {
     usingDefault: true,
@@ -115,8 +84,7 @@ function Api(options) {
         name: source,
       })
       .then(results => createCustomer(results[0], username))
-      .then(customer => createAddress(customer, '_default'))
-      .catch(error => handleError(error));
+      .then(customer => createAddress(customer, '_default'));
   };
 
   Api.prototype.sendvtho = function sendvtho(source, payee, payor, amount) {
@@ -141,24 +109,12 @@ function Api(options) {
 
     const contractObject = new this.web3.eth.Contract(contract.abi,
       process.env.VECHAIN_ENERGY_CONTRACT_ADDRESS);
-      console.log('trying to send the money')
     return contractObject
       .methods.transfer(addressTo.address, amount)
-      .send({ from: addressFrom.address })
-      .then((result) => {
-        console.log('result from send erngy');
-        console.log(result);
-      })
-      .catch((err) => { 
-        console.log('had a problem');
-        console.log(err);
-      });
+      .send({ from: addressFrom.address });
   };
 
-  Api.prototype.sendBalanceInContext = function sendBalanceInContext(source,
-    customer,
-    address,
-    context) {
+  Api.prototype.sendBalanceInContext = function sendBalanceInContext(address) {
     this.web3.eth.accounts.wallet.clear();
     this.web3.eth.accounts.wallet.add(address.privateKey);
 
@@ -167,30 +123,12 @@ function Api(options) {
     const contractObject = new this.web3.eth.Contract(contract.abi,
       process.env.VECHAIN_ENERGY_CONTRACT_ADDRESS);
 
-    console.log('trying to get balance');
-
     return contractObject
       .methods.balanceOf(address.address)
-      .call({ from: address.address })
-      .then((result) => {
-        console.log(result);
-        switch (source) {
-          case 'reddit':
-            context[source]
-              .composeMessage({
-                to: customer.username,
-                subject: 'your vtho tipbot balance',
-                text: `Your current balance is ${result} VTHO`,
-              });
-            break;
-          default:
-            break;
-        }
-      })
-      .catch((error) => { console.log('CAUGHT ERROR'); console.log(error); });
+      .call({ from: address.address });
   };
 
-  Api.prototype.sendAddress = function sendAddress(source, username, context) {
+  Api.prototype.sendAddress = function sendAddress(source, username) {
     return Platform
       .findOne({
         name: source,
@@ -199,27 +137,17 @@ function Api(options) {
         createCustomer(platform, username)]))
       .then(([customer]) => Promise.all([
         customer,
-        createAddress(customer, '_default')]))
-      .then(([customer, address]) => sendAddressInContext(source,
-        customer,
-        address,
-        context));
+        createAddress(customer, '_default')]));
   };
 
-  Api.prototype.sendBalance = function sendBalance(source, username, context) {
+  Api.prototype.sendBalance = function sendBalance(source, username) {
     return Platform
       .findOne({
         name: source,
       })
-      .then(platform => Promise.all([
-        createCustomer(platform, username)]))
-      .then(([customer]) => Promise.all([
-        customer,
-        createAddress(customer, '_default')]))
-      .then(([customer, address]) => this.sendBalanceInContext(source,
-        customer,
-        address,
-        context));
+      .then(platform => createCustomer(platform, username))
+      .then(customer => createAddress(customer, '_default'))
+      .then(address => this.sendBalanceInContext(address));
   };
 
   Api.prototype.withdraw = function withdraw(source, payee, address, amount) {
@@ -239,27 +167,22 @@ function Api(options) {
       ));
   };
 
-  Api.prototype.faucet = function faucet(source, username, context) {
+  Api.prototype.faucet = function faucet(source, username) {
     return Platform
       .findOne({
         name: source,
       })
-      .then(platform => Promise.all([
-        createCustomer(platform, username)]))
-      .then(([customer]) => Promise.all([
-        customer,
-        createAddress(customer, '_default')]))
-      .then(([customer, address]) => this.faucetFundAccount(source,
-        customer,
-        address,
-        context));
+      .then(platform => createCustomer(platform, username))
+      .then(customer => createAddress(customer, '_default'))
+      .then(address => this.faucetFundAccount(address));
   };
 
-  Api.prototype.faucetFundAccount = function faucetFundAccount(source, customer, address, context) {
+  Api.prototype.faucetFundAccount = function faucetFundAccount(address) {
     request
       .post('https://faucet.outofgas.io/requests')
       .send({ to: address.address })
       .end(() => {
+        // todo add logging
         console.log('faucet request completed...');
       });
   };
