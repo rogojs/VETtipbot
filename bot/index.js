@@ -140,9 +140,17 @@ function Bot(options) {
         .registerCustomer(source, username)
         .then((address) => {
           this.logger.info('register.success', { source, username, address: address.address });
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Registration Request',
+            `You have registered an address with the VeChain TipBot. [Deposit Using Wallet Scan](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}). [View On VeForge](https://explore.veforge.com/accounts/${address.address})`);
         })
         .catch((error) => {
           this.logger.warn('register.warn', { source, username, error });
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Registration Request',
+            'I am sorry. Your registration request failed. The tipbot sent a message to the system administrators.');
         });
     });
 
@@ -153,10 +161,17 @@ function Bot(options) {
           this.logger.info('deposit.success', {
             source, username, address: address.address, id: customer.id,
           });
-          this.sendMessage(source, username, 'your vtho tipbot deposit address', `Open your [QR Code](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}) in a new window to scan.`);
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Deposit Request',
+            `[Deposit Using Wallet Scan](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}). [View On VeForge](https://explore.veforge.com/accounts/${address.address})`);
         })
         .catch((error) => {
           this.logger.warn('deposit.warn', { source, username, error });
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Deposit Request',
+            'I am sorry. Your deposit request failed. The tipbot sent a message to the system administrators.');
         });
     });
 
@@ -164,11 +179,18 @@ function Bot(options) {
       this.api
         .sendBalance(source, username)
         .then((result) => {
-          this.logger.info('balance.success', { source, username, result });
-          this.sendMessage(source, username, 'your vtho tipbot balance', `Your current balance is ${result / 100000000000000000000} VTHO`);
+          this.logger.info('balance.success', { source, username });
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Balance Request',
+            `Current balance: ${result / 100000000000000000000} VTHO`);
         })
         .catch(() => {
           this.logger.warn('balance.warn', { source, username });
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Balance Request',
+            'I am sorry. Your balance request failed. The tipbot sent a message to the system administrators.');
         });
     });
 
@@ -179,11 +201,19 @@ function Bot(options) {
           this.logger.info('withdraw.success', {
             source, username, address, amount, result,
           });
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Withdrawal Request',
+            `Successfully sent ${amount} to ${address} [View Transaction On VeForge](https://explore.veforge.com/transactions/${result.transactionHash})`);
         })
         .catch((error) => {
           this.logger.warn('withdraw.warn', {
             source, username, address, amount, error,
           });
+          this.sendMessage(source,
+            username,
+            'VeChain TipBot Withdrawal Request',
+            'I am sorry. Your withdrawal request failed. The tipbot sent a message to the system administrators.');
         });
     });
 
@@ -293,15 +323,6 @@ module.exports.Bot = Bot;
   I am sorry. Your deposit request failed.
   The tipbot sent a message to the system administrators.
 
-  Register
-  @register
-  VeChain TipBot : Your Register Request
-  *Success -
-  You have registered an address with the VeChain TipBot.
-  Click [here] to view your deposit address.
-  *Failure -
-  I am sorry. Your registration request failed.
-  The tipbot sent a message to the system administrators.
 
   Withdraw
   @withdraw
