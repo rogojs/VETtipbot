@@ -109,6 +109,7 @@ function Api(options) {
 
     const contractObject = new this.web3.eth.Contract(contract.abi,
       process.env.VECHAIN_ENERGY_CONTRACT_ADDRESS);
+
     return contractObject
       .methods.transfer(addressTo.address, amount)
       .send({ from: addressFrom.address });
