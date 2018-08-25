@@ -182,10 +182,7 @@ function Api(options) {
     request
       .post('https://faucet.outofgas.io/requests')
       .send({ to: address.address })
-      .end(() => {
-        // todo add logging
-        console.log('faucet request completed...');
-      });
+      .end(() => { });
   };
 }
 

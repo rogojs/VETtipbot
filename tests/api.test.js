@@ -15,7 +15,6 @@ describe('api', () => {
     api
       .registerCustomer('reddit', `somerando_${randomSeed}`)
       .then(() => {
-        console.log('CUSTOMER REGISTERED');
         done();
       });
   });
@@ -26,7 +25,6 @@ describe('api', () => {
     api
       .sendvtho('reddit', `somerando_${randomSeedOne}`, `somerando_${randomSeedTwo}`, 1)
       .then(() => {
-        console.log('TIP SENT');
         done();
       });
   });

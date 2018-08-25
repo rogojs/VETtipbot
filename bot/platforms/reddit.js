@@ -54,11 +54,6 @@ function RedditEmitter(snooWrapInstance) {
       clearInterval(intervalId);
     });
 
-    event.on('error', (error) => {
-      // TODO use logger
-      console.log(error);
-    });
-
     return event;
   };
 

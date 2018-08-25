@@ -34,8 +34,16 @@ function Bot(options) {
     interval: process.env.REDDIT_COMMENT_INTERVAL,
   });
 
+  this.commentEvents.on('error', (error) => {
+    this.logger.error('comment.events.error', { error });
+  });
+
   this.messageEvents = this.redditEmitter.Messages({
     interval: process.env.REDDIT_MESSAGE_INTERVAL,
+  });
+
+  this.messageEvents.on('error', (error) => {
+    this.logger.error('message.events.error', { error });
   });
 
   Bot.prototype.grammarPostProcessor = function grammarPostProcessor(grammarResult, context) {
@@ -114,22 +122,53 @@ function Bot(options) {
     });
   };
 
+  /*
+  Tip
+  @tip
+  VeChain TipBot : Your Tip Request
+  Success -
+  You sent 12345 VTHO to JoeShmoe
+  Click [here] to view your transaction details.
+  *Failure -
+  I am sorry. Your withdrawal request failed.
+  The tipbot sent a message to the system administrators.
+  *Insufficent Funds -
+  I am sorry. You do not have sufficient funds to complete this transaction.
+  Your account details are [here].
+  Add funds to your account by sending @deposit to the VeChain TipBot.
+  */
   Bot.prototype.setupCommentHandlers = function setupCommentHandlers() {
     this.internalEmitters.comments.on('@sendvtho', (source, payee, payor, amount) => {
       this.api
         .sendvtho(source, payee, payor, amount)
-        .then(() => {
+        .then((result) => {
           this.logger.info('tip.success', {
             source, payee, payor, amount: amount / 100000000000000000000,
           });
-          this.sendMessage(source, payee, 'your tip receipt', `You just tipped ${payor} ${amount} VTHO. Check your transaction [here](https://testnet.veforge.com/transactions/0xf57088cde11f6fd70248415aea2d81b828f8cc3654b98f679f7c2853810a8829).`);
+          this.sendMessage(
+            source,
+            payee,
+            'VeChain TipBot Tip Receipt',
+            `You sent ${amount / 100000000000000000000} VTHO to ${payor}. Click [here](https://explore.veforge.com/transactions/${result.transactionHash}) to view your transaction.`,
+          );
+
+          this.sendMessage(
+            source,
+            payor,
+            'VeChain TipBot Tip Receipt',
+            `${payee} sent you ${amount / 100000000000000000000} VTHO. Click [here](https://explore.veforge.com/transactions/${result.transactionHash}) to view your transaction.`,
+          );
         })
-        .catch((error) => {
-          console.log(error);
+        .catch(() => {
           this.logger.warn('tip.warn', {
             source, payee, payor, amount: amount / 100000000000000000000,
           });
-          this.sendMessage(source, payee, 'your tip failed', `I could not tip ${payor} ${amount} VTHO. The transaction failed with this error: REASONS`);
+          this.sendMessage(
+            source,
+            payee,
+            'VeChain TipBot Tip Request',
+            'I am sorry. Your tip request failed. The tipbot sent a message to the system administrators.',
+          );
         });
     });
   };
@@ -221,10 +260,10 @@ function Bot(options) {
       this.api
         .faucet(source, username)
         .then(() => {
-          console.log('completed @faucet');
+          this.logger.info('faucet.success', { source, username });
         })
         .catch(() => {
-          console.log('error @faucet');
+          this.logger.warn('faucet.warn', { source, username });
         });
     });
   };
