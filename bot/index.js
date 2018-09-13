@@ -7,7 +7,6 @@ const grammar = require('../parsers/grammar').parse;
 const command = require('../parsers/command').parse;
 const { Api } = require('../api');
 
-
 function Bot(options) {
   this.logger = winston.createLogger({
     level: process.env.LOG_LEVEL,
@@ -87,6 +86,9 @@ function Bot(options) {
           grammarResult.parameters[0],
           grammarResult.parameters[1]];
         return new Promise((resolve) => { resolve(processedResult); });
+      case '@help':
+        processedResult.parameters = [context.source, context.username];
+        return new Promise((resolve) => { resolve(processedResult); });
       case '@faucet':
         processedResult.parameters = [context.source, context.username];
         return new Promise((resolve) => { resolve(processedResult); });
@@ -122,46 +124,31 @@ function Bot(options) {
     });
   };
 
-  /*
-  Tip
-  @tip
-  VeChain TipBot : Your Tip Request
-  Success -
-  You sent 12345 VTHO to JoeShmoe
-  Click [here] to view your transaction details.
-  *Failure -
-  I am sorry. Your withdrawal request failed.
-  The tipbot sent a message to the system administrators.
-  *Insufficent Funds -
-  I am sorry. You do not have sufficient funds to complete this transaction.
-  Your account details are [here].
-  Add funds to your account by sending @deposit to the VeChain TipBot.
-  */
   Bot.prototype.setupCommentHandlers = function setupCommentHandlers() {
     this.internalEmitters.comments.on('@sendvtho', (source, payee, payor, amount) => {
       this.api
         .sendvtho(source, payee, payor, amount)
         .then((result) => {
           this.logger.info('tip.success', {
-            source, payee, payor, amount: amount / 100000000000000000000,
+            source, payee, payor, amount,
           });
           this.sendMessage(
             source,
             payee,
             'VeChain TipBot Tip Receipt',
-            `You sent ${amount / 100000000000000000000} VTHO to ${payor}. Click [here](https://explore.veforge.com/transactions/${result.transactionHash}) to view your transaction.`,
+            `You sent ${amount} VTHO to ${payor}. [Click to see this transaction on VeForge](https://testnet.veforge.com/transactions/${result.transactionHash})`,
           );
 
           this.sendMessage(
             source,
             payor,
             'VeChain TipBot Tip Receipt',
-            `${payee} sent you ${amount / 100000000000000000000} VTHO. Click [here](https://explore.veforge.com/transactions/${result.transactionHash}) to view your transaction.`,
+            `[/u/${payee}](https://www.reddit.com/u/${payee}) sent you ${amount} VTHO. [Click to see this transaction on VeForge](https://testnet.veforge.com/transactions/${result.transactionHash}) Message [@help](https://www.reddit.com/message/compose/?to=VETtipbot&subject=TipBotIgnoresThis&message=@help) to this tipbot for more information. `,
           );
         })
-        .catch(() => {
+        .catch((error) => {
           this.logger.warn('tip.warn', {
-            source, payee, payor, amount: amount / 100000000000000000000,
+            source, payee, payor, amount, error,
           });
           this.sendMessage(
             source,
@@ -182,7 +169,7 @@ function Bot(options) {
           this.sendMessage(source,
             username,
             'VeChain TipBot Registration Request',
-            `You have registered an address with the VeChain TipBot. [Deposit Using Wallet Scan](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}). [View On VeForge](https://explore.veforge.com/accounts/${address.address})`);
+            `You have registered an address with the VeChain TipBot. [Click to see your QR code and add funds using the VeChainThor Wallet](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address})`);
         })
         .catch((error) => {
           this.logger.warn('register.warn', { source, username, error });
@@ -203,7 +190,7 @@ function Bot(options) {
           this.sendMessage(source,
             username,
             'VeChain TipBot Deposit Request',
-            `[Deposit Using Wallet Scan](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address}). [View On VeForge](https://explore.veforge.com/accounts/${address.address})`);
+            `[Click to see your QR deposit code; use your wallet scan to add funds](https://us-central1-vechain-address-qrcode.cloudfunctions.net/showAddress?address=${address.address})`);
         })
         .catch((error) => {
           this.logger.warn('deposit.warn', { source, username, error });
@@ -218,11 +205,13 @@ function Bot(options) {
       this.api
         .sendBalance(source, username)
         .then((result) => {
+          const amountAsVTHO = this.api.fromVTHO(result);
+          //const amountAsVTHO = this.api.asBigNumber(result);
           this.logger.info('balance.success', { source, username });
           this.sendMessage(source,
             username,
             'VeChain TipBot Balance Request',
-            `Current balance: ${result / 100000000000000000000} VTHO`);
+            `Your current balance: ${amountAsVTHO} VTHO or ${result}`);
         })
         .catch(() => {
           this.logger.warn('balance.warn', { source, username });
@@ -243,7 +232,7 @@ function Bot(options) {
           this.sendMessage(source,
             username,
             'VeChain TipBot Withdrawal Request',
-            `Successfully sent ${amount} to ${address} [View Transaction On VeForge](https://explore.veforge.com/transactions/${result.transactionHash})`);
+            `Successfully sent ${amount} VTHO to ${address} [View Transaction On VeForge](https://testnet.veforge.com/transactions/${result.transactionHash})`);
         })
         .catch((error) => {
           this.logger.warn('withdraw.warn', {
@@ -254,6 +243,15 @@ function Bot(options) {
             'VeChain TipBot Withdrawal Request',
             'I am sorry. Your withdrawal request failed. The tipbot sent a message to the system administrators.');
         });
+    });
+
+    this.internalEmitters.directMessages.on('@help', (source, username) => {
+      this.logger.info('help.success', { source, username });
+
+      this.sendMessage(source,
+        username,
+        'VeChain TipBot Help Request',
+        'Click [here](https://vechain-tipbot-help.firebaseapp.com/) for help and shortcut links.');
     });
 
     this.internalEmitters.directMessages.on('@faucet', (source, username) => {
@@ -341,82 +339,3 @@ function Bot(options) {
 }
 
 module.exports.Bot = Bot;
-
-/*
-  Balance
-  @balance
-  VeChain TipBot : Your Balance Request
-  Success -
-  Your balance is 12345 VTHO.
-  Click [here] for more details.
-  Failure -
-  I am sorry. Your balance request failed.
-  The tipbot sent a message to the system administrators.
-
-  Deposit
-  @deposit
-  VeChain TipBot : Your Deposit Request
-  Success -
-  Click [here] to view your deposit address.
-  Failure -
-  I am sorry. Your deposit request failed.
-  The tipbot sent a message to the system administrators.
-
-
-  Withdraw
-  @withdraw
-  VeChain TipBot : Your Withdrawal Request
-  Success -
-  You withdrew 12345 VTHO.
-  Click [here] to view your transaction details.
-  *Failure -
-  I am sorry. Your withdrawal request failed.
-  The tipbot sent a message to the system administrators.
-  *Insufficent Funds -
-  I am sorry. You do not have sufficient funds to complete this withdrawal.
-  Your account details are [here].
-
-  Tip
-  @tip
-  VeChain TipBot : Your Tip Request
-  Success -
-  You sent 12345 VTHO to JoeShmoe
-  Click [here] to view your transaction details.
-  *Failure -
-  I am sorry. Your withdrawal request failed.
-  The tipbot sent a message to the system administrators.
-  *Insufficent Funds -
-  I am sorry. You do not have sufficient funds to complete this transaction.
-  Your account details are [here].
-  Add funds to your account by sending @deposit to the VeChain TipBot.
-  
-  For additional information send @help to the VeChain TipBot.
-
-  Help
-  @help
-  VeChain TipBot Help
-
-  The VeChain TipBot (VCT) allows you to send and receive tips using VTHO.
-
-  We are currently only available on Reddit.
-
-  VCT listens to your direct messages.
-  VCT responds to the following commands -
-  @help
-    Sends you the help message you are reading now
-  @deposit
-    Sends you a link to the deposit address for your tip jar
-  @balance
-    Sends you the current balance of your tip jar
-  @withdraw VALID-VECHAIN-ADDRESS VTH-AMOUNT
-    Send the VTHO-AMOUNT from your tip jar to the VALID-VECHAIN-ADDRESS
-  @register
-    Creates a tip jar for you (this happens AUTOMATICALLY with any command you send and is not required to start using VCT)
-
-  VCT also scans replies in VeChain and VeChainTrader.
-  VCT will respond to the following in comment replies -
-  @tip VTHO-AMOUNT
-    Sends the VTHO-AMOUNT from your tip jar to the reddit user whose comment you replied.
-    An account will automatically be created for the receipient if it does not exist.
-    They will be notified that a tip has been sent to them.
-*/

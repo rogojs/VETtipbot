@@ -101,6 +101,22 @@ function Api(options) {
       .then(addresses => this.sendEnergy(addresses[0], addresses[1], amount));
   };
 
+  Api.prototype.asVTHO = function asVTHO(amount) {
+    const amountAsBigNumber = this.web3.utils.toBN(amount);
+    const amountAsEnergy = this.web3.utils.toWei(amountAsBigNumber, 'ether');
+    return amountAsEnergy;
+  };
+
+  Api.prototype.fromVTHO = function fromVTHO(amount) {
+    const newAmount = this.web3.utils.toBN(amount);
+    const amountAsVTHO = this.web3.utils.fromWei(newAmount, 'ether');
+    return amountAsVTHO;
+  };
+
+  Api.prototype.asBigNumber = function asBigNumber(amount) {
+    return this.web3.utils.toBN(amount);
+  };
+
   Api.prototype.sendEnergy = function sendEnergy(addressFrom, addressTo, amount) {
     this.web3.eth.accounts.wallet.clear();
     this.web3.eth.accounts.wallet.add(`0x${addressFrom.privateKey}`);
@@ -110,8 +126,10 @@ function Api(options) {
     const contractObject = new this.web3.eth.Contract(contract.abi,
       process.env.VECHAIN_ENERGY_CONTRACT_ADDRESS);
 
+    const amountAsEnergy = this.asVTHO(amount);
+
     return contractObject
-      .methods.transfer(addressTo.address, amount)
+      .methods.transfer(addressTo.address, amountAsEnergy)
       .send({ from: addressFrom.address });
   };
 
