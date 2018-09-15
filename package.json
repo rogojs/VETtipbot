@@ -7,7 +7,8 @@
     "build-grammar": "nearleyc ./grammars/grammar.ne -o ./grammars/grammar.js",
     "test-migration": "mocha api/data/migration.test.js",
     "test": "mocha tests/*.test.js",
-    "build": "npm run build-grammar && npm run test"
+    "build": "npm run build-grammar && npm run test",
+    "start": "node ./index.js"
   },
   "repository": {
     "type": "git",

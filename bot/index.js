@@ -13,7 +13,13 @@ function Bot(options) {
     format: winston.format.json(),
     transports: [
       new winston.transports.Console({ format: winston.format.simple() }),
-      new Elasticsearch({ indexPrefix: 'tipbot-logs', level: 'info' }),
+      new Elasticsearch(
+        {
+          indexPrefix: options.logging.index,
+          level: options.logging.level,
+          clientOpts: { host: options.logging.host },
+        },
+      ),
     ],
   });
 
