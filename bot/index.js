@@ -142,14 +142,14 @@ function Bot(options) {
             source,
             payee,
             'VeChain TipBot Tip Receipt',
-            `You sent ${amount} VTHO to ${payor}. [Click to see this transaction on VeForge](https://testnet.veforge.com/transactions/${result.transactionHash})`,
+            `You sent ${amount} VTHO to ${payor}. [Click to see this transaction on VeForge](https://explore.veforge.com/transactions/${result.transactionHash})`,
           );
 
           this.sendMessage(
             source,
             payor,
             'VeChain TipBot Tip Receipt',
-            `[/u/${payee}](https://www.reddit.com/u/${payee}) sent you ${amount} VTHO. [Click to see this transaction on VeForge](https://testnet.veforge.com/transactions/${result.transactionHash}) Message [@help](https://www.reddit.com/message/compose/?to=VETtipbot&subject=TipBotIgnoresThis&message=@help) to this tipbot for more information. `,
+            `[/u/${payee}](https://www.reddit.com/u/${payee}) sent you ${amount} VTHO. [Click to see this transaction on VeForge](https://explore.veforge.com/transactions/${result.transactionHash}) Message [@help](https://www.reddit.com/message/compose/?to=VETtipbot&subject=TipBotIgnoresThis&message=@help) to this tipbot for more information. `,
           );
         })
         .catch((error) => {
@@ -237,7 +237,7 @@ function Bot(options) {
           this.sendMessage(source,
             username,
             'VeChain TipBot Withdrawal Request',
-            `Successfully sent ${amount} VTHO to ${address} [View Transaction On VeForge](https://testnet.veforge.com/transactions/${result.transactionHash})`);
+            `Successfully sent ${amount} VTHO to ${address} [View Transaction On VeForge](https://explore.veforge.com/transactions/${result.transactionHash})`);
         })
         .catch((error) => {
           this.logger.warn('withdraw.warn', {
