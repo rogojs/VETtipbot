@@ -212,7 +212,6 @@ function Bot(options) {
         .sendBalance(source, username)
         .then((result) => {
           const amountAsVTHO = this.api.fromVTHO(result);
-          //const amountAsVTHO = this.api.asBigNumber(result);
           this.logger.info('balance.success', { source, username });
           this.sendMessage(source,
             username,
